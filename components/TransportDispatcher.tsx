@@ -187,7 +187,7 @@ const TransportDispatcher = () => {
       const query = driverQuery.toLowerCase();
       const name = (driver["ФИО"] || "").toLowerCase();
       const phone = String(driver["Номер телефона"] || "").toLowerCase();
-      return name.includes(query) || phone.includes(query);
+      const phone = (driver["Номер телефона"] || "").toLowerCase();
     });
     switch (driverSort) {
       case "routes":
