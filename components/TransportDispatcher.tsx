@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Papa from "papaparse";
 import CityAutocomplete from "./CityAutocomplete";
 
@@ -26,6 +26,15 @@ const TransportDispatcher = () => {
     totalDrivers: 420,
     totalRoutes: 364,
   });
+
+  // состояния фильтров
+  const [routeQuery, setRouteQuery] = useState("");
+  const [routeSort, setRouteSort] = useState("");
+  const [routeLimit, setRouteLimit] = useState(12);
+
+  const [driverQuery, setDriverQuery] = useState("");
+  const [driverSort, setDriverSort] = useState("");
+  const [driverLimit, setDriverLimit] = useState(12);
 
   // Загрузка CSV
   useEffect(() => {
@@ -96,7 +105,7 @@ const TransportDispatcher = () => {
     }
 
     const prices = routeTrips
-      .map((trip) => trip["ОБЪЯВЛЕННАЯ ЦЕНА"] || trip["СЕБЕСТОИМОСТЬ МАРШРУТА"])
+      .map((trip) => trip["СЕБЕСТОИМОСТЬ МАРШРУТА"])
       .filter((price) => price && price > 0);
 
     const avgPrice = prices.length > 0 ? Math.round(prices.reduce((sum: number, price: number) => sum + price, 0) / prices.length) : 118333;
@@ -132,6 +141,77 @@ const TransportDispatcher = () => {
     });
     setSelectedPartialRoute(null);
   };
+
+  const driverEarnings = useMemo(() => {
+    const map: Record<string, number> = {};
+    bazaData.forEach((trip) => {
+      const name = trip["ФИО"];
+      const price = trip["СЕБЕСТОИМОСТЬ МАРШРУТА"] || 0;
+      if (name) {
+        map[name] = (map[name] || 0) + price;
+      }
+    });
+    return map;
+  }, [bazaData]);
+
+  const filteredRoutes = useMemo(() => {
+    let data = routesData.filter((route) =>
+      (route["Маршрут"] || "").toLowerCase().includes(routeQuery.toLowerCase())
+    );
+    switch (routeSort) {
+      case "trips":
+        data = [...data].sort(
+          (a, b) =>
+            calculateRouteStats(b["Маршрут"]).tripCount -
+            calculateRouteStats(a["Маршрут"]).tripCount
+        );
+        break;
+      case "alpha":
+        data = [...data].sort((a, b) =>
+          (a["Маршрут"] || "").localeCompare(b["Маршрут"] || "", "ru")
+        );
+        break;
+      case "drivers":
+        const getCount = (r: any) =>
+          r["Доступные исполнители"]
+            ? r["Доступные исполнители"].split(";").length
+            : 0;
+        data = [...data].sort((a, b) => getCount(b) - getCount(a));
+        break;
+    }
+    return data;
+  }, [routesData, routeQuery, routeSort, bazaData]);
+
+  const filteredDrivers = useMemo(() => {
+    let data = driversData.filter((driver) => {
+      const query = driverQuery.toLowerCase();
+      const name = (driver["ФИО"] || "").toLowerCase();
+      const phone = String(driver["Номер телефона"] || "").toLowerCase();
+      return name.includes(query) || phone.includes(query);
+    });
+    switch (driverSort) {
+      case "routes":
+        data = [...data].sort(
+          (a, b) =>
+            (b["Общее количество маршрутов"] || 0) -
+            (a["Общее количество маршрутов"] || 0)
+        );
+        break;
+      case "earnings":
+        data = [...data].sort(
+          (a, b) =>
+            (driverEarnings[b["ФИО"]] || 0) -
+            (driverEarnings[a["ФИО"]] || 0)
+        );
+        break;
+      case "alpha":
+        data = [...data].sort((a, b) =>
+          (a["ФИО"] || "").localeCompare(b["ФИО"] || "", "ru")
+        );
+        break;
+    }
+    return data;
+  }, [driversData, driverQuery, driverSort, driverEarnings]);
 
   const parseRouteDetails = (route: any) => {
     const detalization = route["Детализация (варианты)"] || "";
@@ -344,7 +424,7 @@ const TransportDispatcher = () => {
       };
 
       driverTrips.forEach((trip) => {
-        const price = trip["ОБЪЯВЛЕННАЯ ЦЕНА"] || trip["СЕБЕСТОИМОСТЬ МАРШРУТА"] || 0;
+        const price = trip["СЕБЕСТОИМОСТЬ МАРШРУТА"] || 0;
         financials.totalEarnings += price;
 
         const route = trip["Маршрут"];
@@ -623,18 +703,31 @@ const TransportDispatcher = () => {
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-900">Все маршруты</h2>
               <div className="flex items-center space-x-4">
-                <input type="text" placeholder="Поиск по маршруту..." className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option>Сортировка</option>
-                  <option>По количеству рейсов</option>
-                  <option>По алфавиту</option>
-                  <option>По водителям</option>
+                <input
+                  type="text"
+                  placeholder="Поиск по маршруту..."
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={routeQuery}
+                  onChange={(e) => {
+                    setRouteQuery(e.target.value);
+                    setRouteLimit(12);
+                  }}
+                />
+                <select
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={routeSort}
+                  onChange={(e) => setRouteSort(e.target.value)}
+                >
+                  <option value="">Сортировка</option>
+                  <option value="trips">По количеству рейсов</option>
+                  <option value="alpha">По алфавиту</option>
+                  <option value="drivers">По водителям</option>
                 </select>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {routesData.slice(0, 12).map((route, index) => {
+              {filteredRoutes.slice(0, routeLimit).map((route, index) => {
                 const s = calculateRouteStats(route["Маршрут"]);
                 const driversCount = route["Доступные исполнители"] ? route["Доступные исполнители"].split(";").length : 0;
                 const isPopular = s.tripCount > 20;
@@ -681,7 +774,14 @@ const TransportDispatcher = () => {
             </div>
 
             <div className="flex justify-center">
-              <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Загрузить еще</button>
+              {routeLimit < filteredRoutes.length && (
+                <button
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                  onClick={() => setRouteLimit(routeLimit + 12)}
+                >
+                  Загрузить еще
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -691,18 +791,31 @@ const TransportDispatcher = () => {
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-900">Все водители</h2>
               <div className="flex items-center space-x-4">
-                <input type="text" placeholder="Поиск по имени или телефону..." className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option>Сортировка</option>
-                  <option>По количеству маршрутов</option>
-                  <option>По заработку</option>
-                  <option>По алфавиту</option>
+                <input
+                  type="text"
+                  placeholder="Поиск по имени или телефону..."
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={driverQuery}
+                  onChange={(e) => {
+                    setDriverQuery(e.target.value);
+                    setDriverLimit(12);
+                  }}
+                />
+                <select
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={driverSort}
+                  onChange={(e) => setDriverSort(e.target.value)}
+                >
+                  <option value="">Сортировка</option>
+                  <option value="routes">По количеству маршрутов</option>
+                  <option value="earnings">По заработку</option>
+                  <option value="alpha">По алфавиту</option>
                 </select>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {driversData.slice(0, 12).map((driver, index) => {
+              {filteredDrivers.slice(0, driverLimit).map((driver, index) => {
                 const routeCount = driver["Общее количество маршрутов"] || 0;
                 const isTopDriver = routeCount > 15;
 
@@ -737,7 +850,14 @@ const TransportDispatcher = () => {
             </div>
 
             <div className="flex justify-center">
-              <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Загрузить еще</button>
+              {driverLimit < filteredDrivers.length && (
+                <button
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                  onClick={() => setDriverLimit(driverLimit + 12)}
+                >
+                  Загрузить еще
+                </button>
+              )}
             </div>
           </div>
         )}
