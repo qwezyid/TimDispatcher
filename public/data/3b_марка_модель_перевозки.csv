@@ -1,0 +1,396 @@
+Марка,Модель,Количество перевозок (марка+модель)
+AITO,M5,2
+Alfa Romeo,Giulia,2
+Aston Martin,DB11,2
+Audi,A1,1
+Audi,A3,8
+Audi,A4,9
+Audi,A5,3
+Audi,A6,14
+Audi,A8,2
+Audi,Allroad Quattro,6
+Audi,Q2,1
+Audi,Q3,5
+Audi,Q5,10
+Audi,Q7,6
+Audi,Q8,3
+Audi,RS Q3,2
+Audi,S6,3
+Audi,S8,5
+Audi,TT,2
+BMW,1 серия,1
+BMW,2 серия,1
+BMW,3 серия,25
+BMW,4 серия,5
+BMW,5 серия,32
+BMW,6 серия,3
+BMW,7 серия,4
+BMW,8 серия,1
+BMW,IX1,1
+BMW,M2,1
+BMW,M5,4
+BMW,X1,4
+BMW,X2,1
+BMW,X3,10
+BMW,X4,4
+BMW,X5,35
+BMW,X6,13
+BMW,X7,6
+BMW,i4,1
+BYD,Qin,4
+BYD,Song Plus,1
+BYD,Tang,1
+BYD,Yuan Plus,3
+Belgee,Coolray,4
+Buick,Encore GX,1
+Changan,CS55 Plus,2
+Changan,CS75 Plus,1
+Changan,CS85,1
+Changan,Uni-K,2
+Changan,Uni-T,4
+Changan,star truck,1
+Chery,Bonus,2
+Chery,Tiggo,5
+Chery,Tiggo 4,1
+Chery,Tiggo 7,5
+Chery,Tiggo 7 Pro,2
+Chevrolet,Cruze,6
+Chevrolet,Epica,1
+Chevrolet,Lacetti,2
+Chevrolet,Niva,5
+Chevrolet,Tracker,1
+Chevrolet,TrailBlazer,2
+Chrysler,Town & Country,1
+Citroen,C2,1
+Daewoo,Gentra,1
+Daewoo,matiz,3
+Daihatsu,Taft,1
+Daihatsu,Thor,2
+Datsun,on-DO,1
+Defender,Limited,6
+Dodge,Challenger,2
+Dodge,Ram,5
+Dongfeng,AX5,2
+Dongfeng,T5 Evo,3
+EXEED,TXL,1
+EXEED,VX,1
+Evolute,I pro,6
+Evolute,i-sky,2
+Fiat,500,1
+Fiat,Doblo,1
+Ford,Equator,1
+Ford,Escape,1
+Ford,Explorer,6
+Ford,Focus,2
+Ford,Kuga,2
+Ford,Mondeo,1
+Ford,Mustang,1
+Ford,Transit,2
+Ford,Transit Connect,3
+Forthing,T5 Evo,1
+GAC,GS3,2
+GAC,GS8,6
+Geely,Atlas,6
+Geely,Binyue,1
+Geely,Coolray,4
+Geely,Emgrand X7,1
+Geely,Monjaro,12
+Geely,Okavango,1
+Geely,Tugella,3
+Genesis,G70,1
+Genesis,GV70,7
+Genesis,GV80,4
+Great Wall,Poer,5
+Great Wall,Tank 500,1
+Haval,Big Dog,1
+Haval,Dargo,2
+Haval,F7x,3
+Haval,H4,2
+Haval,H5,3
+Haval,H6,1
+Haval,Jolion,13
+Haval,M6,2
+Honda,Accord,3
+Honda,CR-V,8
+Honda,Civic,15
+Honda,Crosstour,1
+Honda,Fit,3
+Honda,Freed,2
+Honda,N-Box,2
+Honda,N-WGN,4
+Honda,Odyssey,1
+Honda,S2000,2
+Honda,Stepwgn,6
+Honda,Stream,5
+Honda,Vezel,8
+Honda,orthia,3
+Hyundai,Accent,1
+Hyundai,Avanta,1
+Hyundai,Casper,2
+Hyundai,Creta,3
+Hyundai,Elantra,6
+Hyundai,Galloper,3
+Hyundai,Grand Starex,4
+Hyundai,Kona,1
+Hyundai,Polisad,4
+Hyundai,Santa Fe,15
+Hyundai,Solaris,7
+Hyundai,Sonata,5
+Hyundai,Staria,5
+Hyundai,Tucson,7
+Hyundai,Veloster,1
+Hyundai,ix35,4
+Infiniti,EX,2
+Infiniti,FX,1
+Infiniti,G,2
+Infiniti,QX50,1
+Infiniti,QX56,2
+Jaecoo,7,2
+Jaguar,F-Pace,2
+Jaguar,XF,2
+Jaguar,XJ,3
+Jeep,Compass,2
+Jeep,Grand Cherokee,4
+Jeep,Wrangler,11
+Jetour,X70 Plus,1
+KG Mobility,Korando,1
+Kia,Carnival,17
+Kia,Ceed,3
+Kia,Cerato,1
+Kia,Forte,2
+Kia,K3,10
+Kia,K5,8
+Kia,K8,2
+Kia,Mohave,5
+Kia,Morning,1
+Kia,Niro,1
+Kia,Optima,1
+Kia,Rio,7
+Kia,Seltos,3
+Kia,Sorento,15
+Kia,Soul,1
+Kia,Sportage,15
+Kia,Stinger,2
+Kia,Venga,1
+Land Rover,Discovery,5
+Land Rover,Freelander,2
+Land Rover,Range Rover,3
+Land Rover,Range Rover Sport,3
+Land Rover,Range Rover Velar,3
+Lexus,ES,2
+Lexus,GS,2
+Lexus,GX,2
+Lexus,IS,3
+Lexus,LX,9
+Lexus,NX,2
+Lexus,RX,12
+Li (lixiang ),L7,2
+Li (lixiang ),L9,2
+Lynk & Co,1,1
+Lynk & Co,5,2
+Lynk & Co,6,1
+MAVERICK,X3,2
+MINI,Cooper,6
+MINI,Countryman,3
+Mazda,3,2
+Mazda,6,6
+Mazda,Axela,1
+Mazda,B-Series,1
+Mazda,CX-3,3
+Mazda,CX-30,1
+Mazda,CX-5,9
+Mazda,CX-7,2
+Mazda,CX-8,1
+Mazda,CX3,2
+Mazda,Demio,1
+Mazda,MPV,1
+Mazda,MX-5,5
+Mazda,MX-6,2
+Mazda,RX-8,1
+Mazda,Savanna,1
+Mercedes-Benz,A-Class,2
+Mercedes-Benz,C-Class,13
+Mercedes-Benz,CL-Class,1
+Mercedes-Benz,CLA-Class,1
+Mercedes-Benz,CLS-Class,6
+Mercedes-Benz,E-Class,34
+Mercedes-Benz,G-Class,11
+Mercedes-Benz,GLA-Class,3
+Mercedes-Benz,GLB-Class,1
+Mercedes-Benz,GLC-Class,6
+Mercedes-Benz,GLE-Class,13
+Mercedes-Benz,GLS-Class,14
+Mercedes-Benz,M-Class,1
+Mercedes-Benz,S-Class,6
+Mercedes-Benz,SL-Class,1
+Mercedes-Benz,V-Class,5
+Mitsubishi,ASX,1
+Mitsubishi,Cartner,1
+Mitsubishi,Galant,2
+Mitsubishi,L200,4
+Mitsubishi,Lancer,3
+Mitsubishi,Outlander,3
+Mitsubishi,Pajero,10
+Mitsubishi,Pajero Mini,3
+Mitsubishi,Pajero Sport,1
+Mitsubishi,RVR,2
+Nissan,200SX,1
+Nissan,300ZX,1
+Nissan,Almera,6
+Nissan,Bluebird,1
+Nissan,Cefiro,1
+Nissan,Dayz,1
+Nissan,Juke,3
+Nissan,Largo,3
+Nissan,Leaf,3
+Nissan,Maxima,1
+Nissan,Murano,1
+Nissan,NV200,2
+Nissan,Note,1
+Nissan,Pathfinder,1
+Nissan,Qashqai,2
+Nissan,Safari,1
+Nissan,Serena,1
+Nissan,Skyline,2
+Nissan,Stagea,2
+Nissan,Teana,4
+Nissan,X-Trail,7
+OMODA,C5,1
+Opel,Insignia,1
+Opel,Movano,1
+Peugeot,207,2
+Peugeot,208,3
+Peugeot,308,1
+Peugeot,605,3
+Polestar,2,1
+Porsche,911,6
+Porsche,Cayenne,19
+Porsche,Cayman,2
+Porsche,Macan,2
+Porsche,Panamera,4
+Porsche,Taycan,1
+Porshe,Cayenne,1
+RAM,1500,2
+Renault,Captur,1
+Renault,Duster,8
+Renault,Kangoo,1
+Renault,Kaptur,1
+Renault,Koleos,1
+Renault,Logan,1
+Renault,Megane,1
+Renault,Sandero,1
+Rolls-Royce,Silver Cloud,1
+Skoda,Karoq,5
+Skoda,Kodiaq,11
+Skoda,Octavia,3
+Skoda,Superb,1
+Smart,Roadster,1
+SsangYong,Korando,1
+SsangYong,Rexton,3
+Subaru,Crosstrek,1
+Subaru,Forester,5
+Subaru,Impreza,3
+Subaru,Legacy,1
+Subaru,Levorg,10
+Subaru,Outback,2
+Suzuki,Escudo,2
+Suzuki,Grand Vitara,4
+Suzuki,Granta,1
+Suzuki,Hustler,1
+Suzuki,Ignis,1
+Suzuki,Jimny,9
+Suzuki,SX4,5
+Suzuki,Swift,2
+Suzuki,Vitara,1
+Suzuki,Xbee,1
+Suzuki,every,2
+Tank,500,4
+Tesla,Model 3,4
+Tesla,Model X,1
+Toyota,4Runner,1
+Toyota,Aqua,2
+Toyota,Auris,1
+Toyota,Avensis,1
+Toyota,C-HR,9
+Toyota,Caldina,3
+Toyota,Camry,15
+Toyota,Chaser,1
+Toyota,Corolla,8
+Toyota,Crown,1
+Toyota,GT86,2
+Toyota,Harrier,3
+Toyota,Highlander,2
+Toyota,Hilux,13
+Toyota,Land Cruiser,12
+Toyota,Land Cruiser Prado,11
+Toyota,Mark II,3
+Toyota,Passo,2
+Toyota,Prius,2
+Toyota,Probox,2
+Toyota,RAV4,22
+Toyota,Ractis,1
+Toyota,Raize,2
+Toyota,Roomy,2
+Toyota,Rumion,2
+Toyota,Sienna,4
+Toyota,Sienta,1
+Toyota,Supra,5
+Toyota,Tank,1
+Toyota,Vellfire,1
+Toyota,Vitz,2
+Toyota,Wish,4
+Toyota,Yaris,6
+Toyota,alphard,1
+Toyota,funcargo,1
+Volkswagen,Arteon,1
+Volkswagen,Beetle,1
+Volkswagen,Caddy,3
+Volkswagen,Golf,7
+Volkswagen,Jetta,5
+Volkswagen,Multivan,1
+Volkswagen,Passat,4
+Volkswagen,Polo,9
+Volkswagen,T-Cross,3
+Volkswagen,Talagon,1
+Volkswagen,Teramont Х,1
+Volkswagen,Tiguan,17
+Volkswagen,Touareg,12
+Volkswagen,Touran,2
+Volkswagen,Transporter,6
+Volkswagen,sagitar,1
+Volvo,S60,2
+Volvo,S90,1
+Volvo,V60,4
+Volvo,V90,1
+Volvo,XC40,1
+Volvo,XC60,1
+Volvo,XC90,4
+Voyah,Passion,1
+Wuling,Wuling,1
+Xiaomi,MS11,1
+Zeekr,7x,2
+Zeekr,Х,2
+Zotye,Coupa,1
+ГАЗ,3102,2
+ГАЗ,3110,1
+ГАЗ,Gazelle,1
+Лада,2101,1
+Лада,2102,1
+Лада,2103,1
+Лада,2104,1
+Лада,2106,4
+Лада,2107,3
+Лада,2112,1
+Лада,2114,3
+Лада,2115,2
+Лада,2121 Niva,6
+Лада,Granta,7
+Лада,Largus,8
+Лада,Priora,2
+Лада,Vesta,13
+Москвич,408,3
+УАЗ,3163 Patriot,4
+УАЗ,Hunter,1
+УАЗ,Pickup,1
+УАЗ,Profi,3
+УАЗ,Буханка,2
