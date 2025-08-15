@@ -1,74 +1,89 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import Papa from "papaparse";
+import CityAutocomplete from "./CityAutocomplete";
 
 const TransportDispatcher = () => {
-  const [activeSection, setActiveSection] = useState('search');
-  const [fromCity, setFromCity] = useState('');
-  const [toCity, setToCity] = useState('');
-  const [searchResults, setSearchResults] = useState(null);
-  const [selectedRoute, setSelectedRoute] = useState(null);
-  const [selectedPartialRoute, setSelectedPartialRoute] = useState(null);
-  const [selectedDriver, setSelectedDriver] = useState(null);
-  const [routesData, setRoutesData] = useState([]);
-  const [driversData, setDriversData] = useState([]);
-  const [bazaData, setBazaData] = useState([]);
+  const [activeSection, setActiveSection] = useState<"search" | "routes" | "drivers" | "fleet">("search");
+
+  // поиск
+  const [fromCity, setFromCity] = useState("");
+  const [toCity, setToCity] = useState("");
+  const [allCities, setAllCities] = useState<string[]>([]);
+
+  // данные
+  const [searchResults, setSearchResults] = useState<{ exact: any[]; partial: any[] } | null>(null);
+  const [selectedRoute, setSelectedRoute] = useState<any>(null);
+  const [selectedPartialRoute, setSelectedPartialRoute] = useState<any>(null);
+  const [selectedDriver, setSelectedDriver] = useState<any>(null);
+  const [routesData, setRoutesData] = useState<any[]>([]);
+  const [driversData, setDriversData] = useState<any[]>([]);
+  const [bazaData, setBazaData] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalTrips: 1569,
     totalCities: 89,
     totalDrivers: 420,
-    totalRoutes: 364
+    totalRoutes: 364,
   });
 
+  // Загрузка CSV
   useEffect(() => {
-  const loadData = async () => {
-    try {
-      const resRoutes = await fetch('/data/2_сведения_о_маршрутах_с_детализацией_подмаршрутов.csv');
-      const routesText = await resRoutes.text();
-      const parsedRoutes = Papa.parse(routesText, { header: true, dynamicTyping: true, skipEmptyLines: true });
+    const loadData = async () => {
+      try {
+        const resRoutes = await fetch("/data/2_сведения_о_маршрутах_с_детализацией_подмаршрутов.csv");
+        const routesText = await resRoutes.text();
+        const parsedRoutes = Papa.parse(routesText, { header: true, dynamicTyping: true, skipEmptyLines: true });
 
-      const resDrivers = await fetch('/data/1_сведения_о_водителях.csv');
-      const driversText = await resDrivers.text();
-      const parsedDrivers = Papa.parse(driversText, { header: true, dynamicTyping: true, skipEmptyLines: true });
+        const resDrivers = await fetch("/data/1_сведения_о_водителях.csv");
+        const driversText = await resDrivers.text();
+        const parsedDrivers = Papa.parse(driversText, { header: true, dynamicTyping: true, skipEmptyLines: true });
 
-      const resBaza = await fetch('/data/baza.csv');
-      const bazaText = await resBaza.text();
-      const parsedBaza = Papa.parse(bazaText, { header: true, dynamicTyping: true, skipEmptyLines: true });
+        const resBaza = await fetch("/data/baza.csv");
+        const bazaText = await resBaza.text();
+        const parsedBaza = Papa.parse(bazaText, { header: true, dynamicTyping: true, skipEmptyLines: true });
 
-      setRoutesData(parsedRoutes.data);
-      setDriversData(parsedDrivers.data);
-      setBazaData(parsedBaza.data);
+        setRoutesData(parsedRoutes.data as any[]);
+        setDriversData(parsedDrivers.data as any[]);
+        setBazaData(parsedBaza.data as any[]);
 
-      const cities = new Set<string>();
-      parsedRoutes.data.forEach((route: any) => {
-        if (route['Откуда полный']) cities.add(route['Откуда полный'].trim());
-        if (route['Куда полный']) cities.add(route['Куда полный'].trim());
-      });
+        // собрать все города для подсказок
+        const cities = new Set<string>();
+        (parsedRoutes.data as any[]).forEach((route: any) => {
+          if (route["Откуда полный"]) cities.add(String(route["Откуда полный"]).trim());
+          if (route["Куда полный"]) cities.add(String(route["Куда полный"]).trim());
+        });
+        const cityList = Array.from(cities)
+          .filter(Boolean)
+          .map((c) => String(c).trim())
+          .filter((c) => c.length > 0)
+          .sort((a, b) => a.localeCompare(b, "ru"));
+        setAllCities(cityList);
 
-      setStats({
-        totalTrips: parsedBaza.data.length,
-        totalCities: cities.size,
-        totalDrivers: parsedDrivers.data.length,
-        totalRoutes: parsedRoutes.data.length
-      });
-    } catch (error) {
-      console.error('Ошибка загрузки данных:', error);
-    }
-  };
-  loadData();
-}, []);
+        setStats({
+          totalTrips: parsedBaza.data.length,
+          totalCities: cities.size,
+          totalDrivers: parsedDrivers.data.length,
+          totalRoutes: parsedRoutes.data.length,
+        });
+      } catch (error) {
+        console.error("Ошибка загрузки данных:", error);
+      }
+    };
+    loadData();
+  }, []);
 
-
+  // Автопоиск при изменении полей/данных
   useEffect(() => {
-    if (routesData.length > 0 && driversData.length > 0) {
+    if (routesData.length > 0 && driversData.length > 0 && fromCity && toCity) {
       handleSearch();
     }
-  }, [routesData, driversData, bazaData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routesData, driversData, bazaData, fromCity, toCity]);
 
-  const calculateRouteStats = (routeName) => {
-    const routeTrips = bazaData.filter(trip => {
-      const tripRoute = trip['Маршрут'] || '';
+  const calculateRouteStats = (routeName: string) => {
+    const routeTrips = bazaData.filter((trip) => {
+      const tripRoute = trip["Маршрут"] || "";
       return tripRoute === routeName;
     });
 
@@ -76,142 +91,143 @@ const TransportDispatcher = () => {
       return {
         avgPrice: 118333,
         totalPrice: 355000,
-        tripCount: 3
+        tripCount: 3,
       };
     }
 
     const prices = routeTrips
-      .map(trip => trip['ОБЪЯВЛЕННАЯ ЦЕНА'] || trip['СЕБЕСТОИМОСТЬ МАРШРУТА'])
-      .filter(price => price && price > 0);
+      .map((trip) => trip["ОБЪЯВЛЕННАЯ ЦЕНА"] || trip["СЕБЕСТОИМОСТЬ МАРШРУТА"])
+      .filter((price) => price && price > 0);
 
-    const avgPrice = prices.length > 0 ? Math.round(prices.reduce((sum, price) => sum + price, 0) / prices.length) : 118333;
-    const totalPrice = prices.reduce((sum, price) => sum + price, 0) || 355000;
+    const avgPrice = prices.length > 0 ? Math.round(prices.reduce((sum: number, price: number) => sum + price, 0) / prices.length) : 118333;
+    const totalPrice = prices.reduce((sum: number, price: number) => sum + price, 0) || 355000;
 
     return {
       avgPrice,
       totalPrice,
-      tripCount: routeTrips.length || 3
+      tripCount: routeTrips.length || 3,
     };
   };
 
   const handleSearch = () => {
     if (!fromCity || !toCity) return;
 
-    const exactRoutes = routesData.filter(route => {
-      const routeName = route['Маршрут'] || '';
-      return routeName.includes(fromCity) && routeName.includes(toCity) &&
-             (routeName.includes(`${fromCity} - ${toCity}`) || routeName.includes(`${fromCity}-${toCity}`));
+    const exactRoutes = routesData.filter((route) => {
+      const routeName = route["Маршрут"] || "";
+      return (
+        routeName.includes(fromCity) &&
+        routeName.includes(toCity) &&
+        (routeName.includes(`${fromCity} - ${toCity}`) || routeName.includes(`${fromCity}-${toCity}`))
+      );
     });
 
-    const partialRoutes = routesData.filter(route => {
-      const detalization = route['Детализация (варианты)'] || '';
-      return detalization.includes(fromCity) && detalization.includes(toCity) &&
-             !exactRoutes.includes(route);
+    const partialRoutes = routesData.filter((route) => {
+      const detalization = route["Детализация (варианты)"] || "";
+      return detalization.includes(fromCity) && detalization.includes(toCity) && !exactRoutes.includes(route);
     });
 
     setSearchResults({
       exact: exactRoutes,
-      partial: partialRoutes
+      partial: partialRoutes,
     });
     setSelectedPartialRoute(null);
   };
 
-  const parseRouteDetails = (route) => {
-    const detalization = route['Детализация (варианты)'] || '';
+  const parseRouteDetails = (route: any) => {
+    const detalization = route["Детализация (варианты)"] || "";
     if (!detalization) return null;
 
-    const variants = detalization.split(' || ');
-    return variants.map(variant => {
-      const cities = variant.split('-').map(c => c.trim());
-      if (cities.length < 2) return null;
-      
-      return {
-        departure: cities[0],
-        intermediate: cities.slice(1, -1),
-        destination: cities[cities.length - 1]
-      };
-    }).filter(v => v);
+    const variants = detalization.split(" || ");
+    return variants
+      .map((variant) => {
+        const cities = variant.split("-").map((c) => c.trim());
+        if (cities.length < 2) return null;
+
+        return {
+          departure: cities[0],
+          intermediate: cities.slice(1, -1),
+          destination: cities[cities.length - 1],
+        };
+      })
+      .filter(Boolean) as { departure: string; intermediate: string[]; destination: string }[];
   };
 
-  const ExactMatchCard = ({ route }) => {
-    const stats = calculateRouteStats(route['Маршрут']);
-    const driversCount = route['Доступные исполнители'] ? route['Доступные исполнители'].split(';').length : 0;
-    
+  const ExactMatchCard = ({ route }: { route: any }) => {
+    const stats = calculateRouteStats(route["Маршрут"]);
+    const driversCount = route["Доступные исполнители"] ? route["Доступные исполнители"].split(";").length : 0;
+
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer">
         <div className="flex justify-between items-start mb-3">
-          <h3 className="font-medium text-blue-600 hover:text-blue-800">{route['Маршрут']}</h3>
+          <h3 className="font-medium text-blue-600 hover:text-blue-800">{route["Маршрут"]}</h3>
         </div>
-        
+
         <div className="text-sm text-gray-600 space-y-1 mb-3">
-          <div>Рейсов: <span className="font-medium">{stats.tripCount}</span></div>
-          <div>Водителей: <span className="font-medium">{driversCount}</span></div>
-          <div className="text-green-600 font-medium">
-            Ср. стоимость: {stats.avgPrice.toLocaleString()} ₽
+          <div>
+            Рейсов: <span className="font-medium">{stats.tripCount}</span>
           </div>
+          <div>
+            Водителей: <span className="font-medium">{driversCount}</span>
+          </div>
+          <div className="text-green-600 font-medium">Ср. стоимость: {stats.avgPrice.toLocaleString()} ₽</div>
         </div>
-        
-        <button 
-          onClick={() => setSelectedRoute(route)}
-          className="text-blue-600 hover:text-blue-800 text-sm"
-        >
+
+        <button onClick={() => setSelectedRoute(route)} className="text-blue-600 hover:text-blue-800 text-sm">
           Нажмите для просмотра деталей →
         </button>
       </div>
     );
   };
 
-  const PartialMatchCard = ({ route, isSelected, onClick }) => {
-    const stats = calculateRouteStats(route['Маршрут']);
-    const driversCount = route['Доступные исполнители'] ? route['Доступные исполнители'].split(';').length : 0;
-    
+  const PartialMatchCard = ({ route, isSelected, onClick }: { route: any; isSelected: boolean; onClick: () => void }) => {
+    const stats = calculateRouteStats(route["Маршрут"]);
+    const driversCount = route["Доступные исполнители"] ? route["Доступные исполнители"].split(";").length : 0;
+
     return (
-      <div 
+      <div
         className={`border rounded-lg p-4 cursor-pointer transition-all ${
-          isSelected ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200 hover:shadow-md'
+          isSelected ? "bg-blue-50 border-blue-300" : "bg-white border-gray-200 hover:shadow-md"
         }`}
         onClick={onClick}
       >
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="font-medium text-blue-600">{route['Маршрут']}</h3>
+            <h3 className="font-medium text-blue-600">{route["Маршрут"]}</h3>
             <div className="text-sm text-gray-600 mt-1">
               <span>Рейсов: {stats.tripCount}</span>
               <span className="ml-4">Водителей: {driversCount}</span>
             </div>
-            <div className="text-sm text-green-600 font-medium mt-1">
-              Ср. стоимость: {stats.avgPrice.toLocaleString()} ₽
-            </div>
+            <div className="text-sm text-green-600 font-medium mt-1">Ср. стоимость: {stats.avgPrice.toLocaleString()} ₽</div>
           </div>
-          <span className={`text-gray-400 transition-transform ${isSelected ? 'rotate-90' : ''}`}>▶</span>
+          <span className={`text-gray-400 transition-transform ${isSelected ? "rotate-90" : ""}`}>▶</span>
         </div>
       </div>
     );
   };
 
-  const DriversList = ({ route }) => {
-    if (!route['Доступные исполнители']) return null;
+  const DriversList = ({ route }: { route: any }) => {
+    if (!route["Доступные исполнители"]) return null;
 
-    const drivers = route['Доступные исполнители'].split(';').map(name => name.trim());
-    
+    const drivers = route["Доступные исполнители"].split(";").map((name: string) => name.trim());
+
     return (
       <div className="mt-4 space-y-3">
-        {drivers.map((driverName, index) => {
-          const driver = driversData.find(d => d['ФИО'] === driverName);
+        {drivers.map((driverName: string, index: number) => {
+          const driver = driversData.find((d) => d["ФИО"] === driverName);
           if (!driver) return null;
-          
+
           return (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 hover:from-blue-50 hover:to-blue-100 transition-all cursor-pointer shadow-sm hover:shadow-md"
               onClick={() => setSelectedDriver(driver)}
             >
               <div className="flex justify-between items-center">
                 <div>
-                  <div className="font-semibold text-gray-900">{driver['ФИО']}</div>
+                  <div className="font-semibold text-gray-900">{driver["ФИО"]}</div>
                   <div className="text-sm text-gray-600 flex items-center mt-1">
                     <span className="mr-2">📞</span>
-                    {driver['Номер телефона']}
+                    {driver["Номер телефона"]}
                   </div>
                 </div>
                 <div className="text-right">
@@ -227,28 +243,31 @@ const TransportDispatcher = () => {
     );
   };
 
-  const RouteDetailModal = ({ route }) => {
+  const RouteDetailModal = ({ route }: { route: any }) => {
     const routeVariants = parseRouteDetails(route);
-    const stats = calculateRouteStats(route['Маршрут']);
-    const driversCount = route['Доступные исполнители'] ? route['Доступные исполнители'].split(';').length : 0;
-    
+    const rstats = calculateRouteStats(route["Маршрут"]);
+    const driversCount = route["Доступные исполнители"] ? route["Доступные исполнители"].split(";").length : 0;
+
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+        onClick={() => setSelectedRoute(null)} // ⟵ клик по фону закрывает
+      >
+        <div
+          className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()} // ⟵ клики внутри не закрывают
+        >
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">{route['Маршрут']}</h2>
-              <button 
-                onClick={() => setSelectedRoute(null)}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
-              >
+              <h2 className="text-xl font-bold text-gray-900">{route["Маршрут"]}</h2>
+              <button onClick={() => setSelectedRoute(null)} className="text-gray-500 hover:text-gray-700 text-2xl">
                 ×
               </button>
             </div>
 
             <div className="grid grid-cols-4 gap-4 mb-6">
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{stats.tripCount}</div>
+                <div className="text-2xl font-bold text-blue-600">{rstats.tripCount}</div>
                 <div className="text-sm text-gray-600">Всего рейсов</div>
               </div>
               <div className="text-center">
@@ -256,11 +275,11 @@ const TransportDispatcher = () => {
                 <div className="text-sm text-gray-600">Водителей</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">{stats.avgPrice.toLocaleString()} ₽</div>
+                <div className="text-2xl font-bold text-orange-600">{rstats.avgPrice.toLocaleString()} ₽</div>
                 <div className="text-sm text-gray-600">Ср. стоимость</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">{stats.totalPrice.toLocaleString()} ₽</div>
+                <div className="text-2xl font-bold text-purple-600">{rstats.totalPrice.toLocaleString()} ₽</div>
                 <div className="text-sm text-gray-600">Общая стоимость</div>
               </div>
             </div>
@@ -277,17 +296,15 @@ const TransportDispatcher = () => {
                           <span className="ml-2 font-medium">{variant.departure}</span>
                           <span className="ml-2 text-gray-500">Отправление</span>
                         </div>
-                        
+
                         {variant.intermediate.length > 0 && (
                           <div className="flex items-center flex-1">
                             <div className="flex-1 border-t-2 border-dashed border-gray-300"></div>
-                            <div className="px-2 text-sm text-gray-600">
-                              {variant.intermediate.join(' → ')}
-                            </div>
+                            <div className="px-2 text-sm text-gray-600">{variant.intermediate.join(" → ")}</div>
                             <div className="flex-1 border-t-2 border-dashed border-gray-300"></div>
                           </div>
                         )}
-                        
+
                         <div className="flex items-center">
                           <div className="w-3 h-3 bg-red-500 rounded-full"></div>
                           <span className="ml-2 font-medium">{variant.destination}</span>
@@ -310,66 +327,67 @@ const TransportDispatcher = () => {
     );
   };
 
-  const DriverDetailModal = ({ driver }) => {
+  const DriverDetailModal = ({ driver }: { driver: any }) => {
     if (!driver) return null;
-    
-    const driverRoutes = driver['Доступные маршруты'] ? driver['Доступные маршруты'].split(';').map(r => r.trim()) : [];
-    const routeCount = driver['Общее количество маршрутов'] || 0;
-    
-    const getDriverFinancials = (driverName) => {
-      const driverTrips = bazaData.filter(trip => trip['ФИО'] === driverName);
-      
-      const financials = {
+
+    const driverRoutes = driver["Доступные маршруты"] ? driver["Доступные маршруты"].split(";").map((r: string) => r.trim()) : [];
+    const routeCount = driver["Общее количество маршрутов"] || 0;
+
+    const getDriverFinancials = (driverName: string) => {
+      const driverTrips = bazaData.filter((trip) => trip["ФИО"] === driverName);
+
+      const financials: any = {
         totalTrips: driverTrips.length,
         totalEarnings: 0,
-        routeDetails: {},
-        avgTripCost: 0
+        routeDetails: {} as Record<string, { count: number; totalPrice: number; avgPrice: number }>,
+        avgTripCost: 0,
       };
-      
-      driverTrips.forEach(trip => {
-        const price = trip['ОБЪЯВЛЕННАЯ ЦЕНА'] || trip['СЕБЕСТОИМОСТЬ МАРШРУТА'] || 0;
+
+      driverTrips.forEach((trip) => {
+        const price = trip["ОБЪЯВЛЕННАЯ ЦЕНА"] || trip["СЕБЕСТОИМОСТЬ МАРШРУТА"] || 0;
         financials.totalEarnings += price;
-        
-        const route = trip['Маршрут'];
+
+        const route = trip["Маршрут"];
         if (route) {
           if (!financials.routeDetails[route]) {
             financials.routeDetails[route] = {
               count: 0,
               totalPrice: 0,
-              avgPrice: 0
+              avgPrice: 0,
             };
           }
           financials.routeDetails[route].count++;
           financials.routeDetails[route].totalPrice += price;
-          financials.routeDetails[route].avgPrice = Math.round(
-            financials.routeDetails[route].totalPrice / financials.routeDetails[route].count
-          );
+          financials.routeDetails[route].avgPrice = Math.round(financials.routeDetails[route].totalPrice / financials.routeDetails[route].count);
         }
       });
-      
+
       financials.avgTripCost = financials.totalTrips > 0 ? Math.round(financials.totalEarnings / financials.totalTrips) : 0;
-      
+
       return financials;
     };
-    
-    const financials = getDriverFinancials(driver['ФИО']);
-    
+
+    const financials = getDriverFinancials(driver["ФИО"]);
+
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+        onClick={() => setSelectedDriver(null)} // ⟵ клик по фону закрывает
+      >
+        <div
+          className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+          onClick={(e) => e.stopPropagation()} // ⟵ клики внутри не закрывают
+        >
           <div className="p-6">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{driver['ФИО']}</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{driver["ФИО"]}</h2>
                 <p className="text-gray-600 flex items-center mt-1">
                   <span className="mr-2">📞</span>
-                  {driver['Номер телефона']}
+                  {driver["Номер телефона"]}
                 </p>
               </div>
-              <button 
-                onClick={() => setSelectedDriver(null)}
-                className="text-gray-400 hover:text-gray-600 text-2xl font-light"
-              >
+              <button onClick={() => setSelectedDriver(null)} className="text-gray-400 hover:text-gray-600 text-2xl font-light">
                 ×
               </button>
             </div>
@@ -397,7 +415,7 @@ const TransportDispatcher = () => {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Доступные маршруты</h3>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {driverRoutes.map((route, index) => (
+                  {driverRoutes.map((route: string, index: number) => (
                     <div key={index} className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
                       <div className="flex justify-between items-center">
                         <span className="font-medium text-gray-900">{route}</span>
@@ -411,36 +429,28 @@ const TransportDispatcher = () => {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Выполненные рейсы и заработок</h3>
                 <div className="space-y-3 max-h-60 overflow-y-auto">
-                {(
-  Object.entries(
-    financials.routeDetails as Record<string, { totalPrice: number }>
-  ) as [string, { totalPrice: number }][]
-                )
-                    .sort(([, a], [, b]) => (b.totalPrice ?? 0) - (a.totalPrice ?? 0))
-                    .map(([route, details]: [string, { count: number; totalPrice: number; avgPrice: number }], index) => (
-                    <div key={index} className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-medium text-gray-900 text-sm">{route}</h4>
-                        <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                          {details.count} рейс.
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <span className="text-gray-600">Средняя цена:</span>
-                          <div className="font-semibold text-blue-600">{details.avgPrice.toLocaleString()} ₽</div>
+                  {Object.entries(financials.routeDetails)
+                    .sort(([, a], [, b]) => (b as any).totalPrice - (a as any).totalPrice) // упрощённый каст
+                    .map(([route, details]: any, index: number) => (
+                      <div key={index} className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-medium text-gray-900 text-sm">{route}</h4>
+                          <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">{details.count} рейс.</span>
                         </div>
-                        <div>
-                          <span className="text-gray-600">Общий доход:</span>
-                          <div className="font-semibold text-green-600">{details.totalPrice.toLocaleString()} ₽</div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <span className="text-gray-600">Средняя цена:</span>
+                            <div className="font-semibold text-blue-600">{details.avgPrice.toLocaleString()} ₽</div>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Общий доход:</span>
+                            <div className="font-semibold text-green-600">{details.totalPrice.toLocaleString()} ₽</div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                   {Object.keys(financials.routeDetails).length === 0 && (
-                    <div className="text-center text-gray-500 py-4">
-                      Данных о выполненных рейсах не найдено
-                    </div>
+                    <div className="text-center text-gray-500 py-4">Данных о выполненных рейсах не найдено</div>
                   )}
                 </div>
               </div>
@@ -451,6 +461,7 @@ const TransportDispatcher = () => {
     );
   };
 
+  // UI
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm">
@@ -462,7 +473,7 @@ const TransportDispatcher = () => {
               </div>
               <h1 className="text-2xl font-bold text-gray-900">Диспетчер перевозок</h1>
             </div>
-            
+
             <div className="flex items-center space-x-8 text-sm text-gray-600">
               <span>{stats.totalTrips} рейсов</span>
               <span>{stats.totalRoutes} маршрутов</span>
@@ -476,44 +487,36 @@ const TransportDispatcher = () => {
         <div className="max-w-7xl mx-auto px-6">
           <nav className="flex space-x-8">
             <button
-              onClick={() => setActiveSection('search')}
+              onClick={() => setActiveSection("search")}
               className={`flex items-center px-4 py-4 text-sm font-medium border-b-2 ${
-                activeSection === 'search' 
-                  ? 'border-blue-500 text-blue-600' 
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                activeSection === "search" ? "border-blue-500 text-blue-600" : "border-transparent text-gray-600 hover:text-gray-900"
               }`}
             >
               <span className="mr-2">🔍</span>
               Поиск заявки
             </button>
             <button
-              onClick={() => setActiveSection('routes')}
+              onClick={() => setActiveSection("routes")}
               className={`flex items-center px-4 py-4 text-sm font-medium border-b-2 ${
-                activeSection === 'routes' 
-                  ? 'border-blue-500 text-blue-600' 
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                activeSection === "routes" ? "border-blue-500 text-blue-600" : "border-transparent text-gray-600 hover:text-gray-900"
               }`}
             >
               <span className="mr-2">🗺️</span>
               Маршруты
             </button>
             <button
-              onClick={() => setActiveSection('drivers')}
+              onClick={() => setActiveSection("drivers")}
               className={`flex items-center px-4 py-4 text-sm font-medium border-b-2 ${
-                activeSection === 'drivers' 
-                  ? 'border-blue-500 text-blue-600' 
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                activeSection === "drivers" ? "border-blue-500 text-blue-600" : "border-transparent text-gray-600 hover:text-gray-900"
               }`}
             >
               <span className="mr-2">👥</span>
               Водители
             </button>
             <button
-              onClick={() => setActiveSection('fleet')}
+              onClick={() => setActiveSection("fleet")}
               className={`flex items-center px-4 py-4 text-sm font-medium border-b-2 ${
-                activeSection === 'fleet' 
-                  ? 'border-blue-500 text-blue-600' 
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                activeSection === "fleet" ? "border-blue-500 text-blue-600" : "border-transparent text-gray-600 hover:text-gray-900"
               }`}
             >
               <span className="mr-2">🚛</span>
@@ -524,33 +527,26 @@ const TransportDispatcher = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {activeSection === 'search' && (
+        {activeSection === "search" && (
           <div className="space-y-6">
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Поиск по маршруту</h2>
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Откуда</label>
-                  <input
-                    type="text"
-                    value={fromCity}
-                    onChange={(e) => setFromCity(e.target.value)}
-                    onBlur={handleSearch}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Введите город отправления"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Куда</label>
-                  <input
-                    type="text"
-                    value={toCity}
-                    onChange={(e) => setToCity(e.target.value)}
-                    onBlur={handleSearch}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Введите город назначения"
-                  />
-                </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <CityAutocomplete
+                  label="Откуда"
+                  placeholder="Выберите город отправления"
+                  value={fromCity}
+                  onChange={setFromCity}
+                  options={allCities}
+                />
+                <CityAutocomplete
+                  label="Куда"
+                  placeholder="Введите город назначения"
+                  value={toCity}
+                  onChange={setToCity}
+                  options={allCities}
+                />
               </div>
             </div>
 
@@ -559,11 +555,9 @@ const TransportDispatcher = () => {
                 <div className="space-y-4">
                   <div className="bg-green-50 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-green-700">Точные совпадения</h3>
-                    <p className="text-sm text-green-600">
-                      {searchResults.exact.length} {searchResults.exact.length === 1 ? 'маршрут' : 'маршрутов'}
-                    </p>
+                    <p className="text-sm text-green-600">{searchResults.exact.length} {searchResults.exact.length === 1 ? "маршрут" : "маршрутов"}</p>
                   </div>
-                  
+
                   {searchResults.exact.length > 0 ? (
                     <div className="space-y-3">
                       {searchResults.exact.map((route, index) => (
@@ -571,39 +565,31 @@ const TransportDispatcher = () => {
                       ))}
                     </div>
                   ) : (
-                    <div className="bg-white border border-gray-200 rounded-lg p-8 text-center text-gray-500">
-                      Точных совпадений не найдено
-                    </div>
+                    <div className="bg-white border border-gray-200 rounded-lg p-8 text-center text-gray-500">Точных совпадений не найдено</div>
                   )}
                 </div>
 
                 <div className="space-y-4">
                   <div className="bg-blue-50 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-blue-700">Частичные совпадения</h3>
-                    <p className="text-sm text-blue-600">
-                      {searchResults.partial.length} {searchResults.partial.length === 1 ? 'коридор' : 'коридоров'}
-                    </p>
+                    <p className="text-sm text-blue-600">{searchResults.partial.length} {searchResults.partial.length === 1 ? "коридор" : "коридоров"}</p>
                   </div>
-                  
+
                   {searchResults.partial.length > 0 ? (
                     <div className="space-y-3">
                       {searchResults.partial.map((route, index) => (
                         <div key={`partial-${index}`}>
-                          <PartialMatchCard 
+                          <PartialMatchCard
                             route={route}
                             isSelected={selectedPartialRoute === route}
                             onClick={() => setSelectedPartialRoute(selectedPartialRoute === route ? null : route)}
                           />
-                          {selectedPartialRoute === route && (
-                            <DriversList route={route} />
-                          )}
+                          {selectedPartialRoute === route && <DriversList route={route} />}
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="bg-white border border-gray-200 rounded-lg p-8 text-center text-gray-500">
-                      Частичных совпадений не найдено
-                    </div>
+                    <div className="bg-white border border-gray-200 rounded-lg p-8 text-center text-gray-500">Частичных совпадений не найдено</div>
                   )}
                 </div>
               </div>
@@ -632,16 +618,12 @@ const TransportDispatcher = () => {
           </div>
         )}
 
-        {activeSection === 'routes' && (
+        {activeSection === "routes" && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-900">Все маршруты</h2>
               <div className="flex items-center space-x-4">
-                <input
-                  type="text"
-                  placeholder="Поиск по маршруту..."
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <input type="text" placeholder="Поиск по маршруту..." className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option>Сортировка</option>
                   <option>По количеству рейсов</option>
@@ -653,23 +635,21 @@ const TransportDispatcher = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {routesData.slice(0, 12).map((route, index) => {
-                const stats = calculateRouteStats(route['Маршрут']);
-                const driversCount = route['Доступные исполнители'] ? route['Доступные исполнители'].split(';').length : 0;
-                const isPopular = stats.tripCount > 20;
-                
+                const s = calculateRouteStats(route["Маршрут"]);
+                const driversCount = route["Доступные исполнители"] ? route["Доступные исполнители"].split(";").length : 0;
+                const isPopular = s.tripCount > 20;
+
                 return (
                   <div key={index} className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-all duration-300 cursor-pointer group">
                     <div className="flex justify-between items-start mb-3">
-                      <h3 className="font-semibold text-blue-600 group-hover:text-blue-800 transition-colors">{route['Маршрут']}</h3>
-                      {isPopular && (
-                        <span className="bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 text-xs px-3 py-1 rounded-full font-medium">Популярный</span>
-                      )}
+                      <h3 className="font-semibold text-blue-600 group-hover:text-blue-800 transition-colors">{route["Маршрут"]}</h3>
+                      {isPopular && <span className="bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 text-xs px-3 py-1 rounded-full font-medium">Популярный</span>}
                     </div>
-                    
+
                     <div className="space-y-2 text-sm text-gray-600">
                       <div className="flex justify-between">
                         <span>Рейсов:</span>
-                        <span className="font-medium text-blue-600">{stats.tripCount}</span>
+                        <span className="font-medium text-blue-600">{s.tripCount}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Водителей:</span>
@@ -677,23 +657,20 @@ const TransportDispatcher = () => {
                       </div>
                       <div className="flex justify-between">
                         <span>Ср. стоимость:</span>
-                        <span className="font-medium text-orange-600">{stats.avgPrice.toLocaleString()} ₽</span>
+                        <span className="font-medium text-orange-600">{s.avgPrice.toLocaleString()} ₽</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Общая стоимость:</span>
-                        <span className="font-medium text-purple-600">{stats.totalPrice.toLocaleString()} ₽</span>
+                        <span className="font-medium text-purple-600">{s.totalPrice.toLocaleString()} ₽</span>
                       </div>
                     </div>
-                    
+
                     <div className="mt-4 pt-3 border-t border-gray-100">
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-gray-500">
-                          {route['Откуда полный']} → {route['Куда полный']}
+                          {route["Откуда полный"]} → {route["Куда полный"]}
                         </span>
-                        <button 
-                          onClick={() => setSelectedRoute(route)}
-                          className="text-blue-600 hover:text-blue-800 text-xs"
-                        >
+                        <button onClick={() => setSelectedRoute(route)} className="text-blue-600 hover:text-blue-800 text-xs">
                           Подробнее →
                         </button>
                       </div>
@@ -704,23 +681,17 @@ const TransportDispatcher = () => {
             </div>
 
             <div className="flex justify-center">
-              <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-                Загрузить еще
-              </button>
+              <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Загрузить еще</button>
             </div>
           </div>
         )}
 
-        {activeSection === 'drivers' && (
+        {activeSection === "drivers" && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-900">Все водители</h2>
               <div className="flex items-center space-x-4">
-                <input
-                  type="text"
-                  placeholder="Поиск по имени или телефону..."
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <input type="text" placeholder="Поиск по имени или телефону..." className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option>Сортировка</option>
                   <option>По количеству маршрутов</option>
@@ -732,36 +703,31 @@ const TransportDispatcher = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {driversData.slice(0, 12).map((driver, index) => {
-                const routeCount = driver['Общее количество маршрутов'] || 0;
+                const routeCount = driver["Общее количество маршрутов"] || 0;
                 const isTopDriver = routeCount > 15;
-                
+
                 return (
                   <div key={index} className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-all duration-300 group">
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{driver['ФИО']}</h3>
+                        <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{driver["ФИО"]}</h3>
                         <p className="text-sm text-gray-600 flex items-center mt-1">
                           <span className="mr-1">📞</span>
-                          {driver['Номер телефона']}
+                          {driver["Номер телефона"]}
                         </p>
                       </div>
-                      {isTopDriver && (
-                        <span className="bg-gradient-to-r from-green-100 to-green-200 text-green-800 text-xs px-3 py-1 rounded-full font-medium">ТОП</span>
-                      )}
+                      {isTopDriver && <span className="bg-gradient-to-r from-green-100 to-green-200 text-green-800 text-xs px-3 py-1 rounded-full font-medium">ТОП</span>}
                     </div>
-                    
+
                     <div className="space-y-2 text-sm text-gray-600 mb-4">
                       <div className="flex justify-between">
                         <span>Маршрутов:</span>
                         <span className="font-medium text-blue-600">{routeCount}</span>
                       </div>
                     </div>
-                    
+
                     <div className="pt-3 border-t border-gray-100">
-                      <button 
-                        onClick={() => setSelectedDriver(driver)}
-                        className="w-full text-center text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
+                      <button onClick={() => setSelectedDriver(driver)} className="w-full text-center text-blue-600 hover:text-blue-800 text-sm font-medium">
                         Посмотреть профиль →
                       </button>
                     </div>
@@ -771,9 +737,7 @@ const TransportDispatcher = () => {
             </div>
 
             <div className="flex justify-center">
-              <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-                Загрузить еще
-              </button>
+              <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Загрузить еще</button>
             </div>
           </div>
         )}
