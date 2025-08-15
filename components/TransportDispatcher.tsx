@@ -186,7 +186,8 @@ const TransportDispatcher = () => {
     let data = driversData.filter((driver) => {
       const query = driverQuery.toLowerCase();
       const name = (driver["ФИО"] || "").toLowerCase();
-      const phone = String(driver["Номер телефона"] || "").toLowerCase();
+      // normalize phone to string in case numeric values are present
+      const phone = String(driver["Номер телефона"] ?? "").toLowerCase();
       return name.includes(query) || phone.includes(query);
     });
     switch (driverSort) {
